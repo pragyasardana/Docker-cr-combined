@@ -1,4 +1,6 @@
 // +build linux,cgo
+// ./docker/daemon/execdriver/native/driver.go    //peter
+
 
 package native
 
@@ -316,6 +318,10 @@ func libcontainerCriuOpts(containerOpts *types.CriuConfig) *libcontainer.CriuOpt
 		ImagesDirectory:         containerOpts.ImagesDirectory,
 		WorkDirectory:           containerOpts.WorkDirectory,
 		LeaveRunning:            containerOpts.LeaveRunning,
+                PrevImagesDirectory:     containerOpts.PrevImagesDirectory,   //peter 
+                TrackMemory:             containerOpts.TrackMemory,       //peter
+                EnablePreDump:           containerOpts.EnablePreDump,     //peter
+                AutoDedup:               containerOpts.AutoDedup,         //peter
 		TcpEstablished:          true,
 		ExternalUnixConnections: true,
 		FileLocks:               true,
