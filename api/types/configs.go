@@ -1,3 +1,6 @@
+// ./docker/api/types/configs.go  //peter
+
+
 package types
 
 import "github.com/docker/docker/api/types/container"
@@ -39,6 +42,10 @@ type CriuConfig struct {
 	ImagesDirectory string
 	WorkDirectory   string
 	LeaveRunning    bool
+        PrevImagesDirectory   string  //peter 
+        TrackMemory     bool //peter
+        EnablePreDump     bool //peter
+        AutoDedup         bool //peter
 }
 
 // RestoreConfig holds the restore command options, which is a superset of the CRIU options
