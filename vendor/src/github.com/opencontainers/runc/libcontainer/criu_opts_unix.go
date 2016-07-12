@@ -1,4 +1,6 @@
 // +build linux freebsd
+// ./docker/vendor/src/github.com/opencontainers/runc/libcontainer/criu_opts_unix.go   // peter
+
 
 package libcontainer
 
@@ -33,4 +35,8 @@ type CriuOpts struct {
 	PageServer              CriuPageServerInfo // allow to dump to criu page server
 	VethPairs               []VethPairName     // pass the veth to criu when restore
 	ManageCgroupsMode       cg_mode            // dump or restore cgroup mode
+        PrevImagesDirectory     string                    //peter 
+        TrackMemory             bool                      //peter
+        EnablePreDump           bool                     //peter
+        AutoDedup               bool                     //peter 
 }
