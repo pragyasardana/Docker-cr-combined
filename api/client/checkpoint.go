@@ -1,5 +1,5 @@
 // +build experimental
-
+// ./docker/api/client/checkpoint.go     //peter
 package client
 
 import (
@@ -21,6 +21,10 @@ func (cli *DockerCli) CmdCheckpoint(args ...string) error {
 		flImgDir       = cmd.String([]string{"-image-dir"}, "", "directory for storing checkpoint image files")
 		flWorkDir      = cmd.String([]string{"-work-dir"}, "", "directory for storing log file")
 		flLeaveRunning = cmd.Bool([]string{"-leave-running"}, false, "leave the container running after checkpoint")
+                flPrevImgDir      = cmd.String([]string{"-prev-image-dir"}, "", "previous Image directory")  //peter
+		flTrackMem = cmd.Bool([]string{"-track-mem"}, false, "track memory flag")   // peter
+                flEnablePreDump = cmd.Bool([]string{"-predump"}, false, "predump flag")   // peter 
+                flAutoDedup = cmd.Bool([]string{"-auto-dedup"}, false, "auto-dedup flag")   // peter 
 	)
 
 	if err := cmd.ParseFlags(args, true); err != nil {
@@ -36,6 +40,10 @@ func (cli *DockerCli) CmdCheckpoint(args ...string) error {
 		ImagesDirectory: *flImgDir,
 		WorkDirectory:   *flWorkDir,
 		LeaveRunning:    *flLeaveRunning,
+                PrevImagesDirectory:  *flPrevImgDir,  //peter 
+                TrackMemory:  *flTrackMem,  //peter
+                EnablePreDump:  *flEnablePreDump, //peter
+                AutoDedup:      *flAutoDedup,     //peter 
 	}
 
 	var encounteredError error
