@@ -1,4 +1,5 @@
 // +build linux
+// ./docker/vendor/src/github.com/opencontainers/runc/libcontainer/container_linux.go   // peter
 
 package libcontainer
 
@@ -451,6 +452,9 @@ func (c *linuxContainer) addCriuDumpMount(req *criurpc.CriuReq, m *configs.Mount
 }
 
 func (c *linuxContainer) Checkpoint(criuOpts *CriuOpts) error {
+
+       fmt.Println("docker/vendor/src/github.com/opencontainers/runcs/libcontainers/container_linux.go --> Checkpoint() Peter 11")
+
 	c.m.Lock()
 	defer c.m.Unlock()
 
@@ -475,6 +479,19 @@ func (c *linuxContainer) Checkpoint(criuOpts *CriuOpts) error {
 	if err := os.Mkdir(criuOpts.WorkDirectory, 0755); err != nil && !os.IsExist(err) {
 		return err
 	}
+        
+        // peter
+/**
+        if criuOpts.PrevImagesDirectory == "" {
+		criuOpts.PrevImagesDirectory = filepath.Join(c.root, "criu.preimage")
+	}
+
+	if err := os.Mkdir(criuOpts.PrevImagesDirectory, 0755); err != nil && !os.IsExist(err) {
+		return err
+	}
+**/
+        
+         
 
 	workDir, err := os.Open(criuOpts.WorkDirectory)
 	if err != nil {
@@ -487,7 +504,65 @@ func (c *linuxContainer) Checkpoint(criuOpts *CriuOpts) error {
 		return err
 	}
 	defer imageDir.Close()
+        
+        //fmt.Println("peter- aa11")  //peter
+        // peter
+        if  criuOpts.PrevImagesDirectory !="" {
+        	prevImagesDir, err := os.Open(criuOpts.PrevImagesDirectory)
+		if err != nil {
+			return err
+		}
+		defer prevImagesDir.Close()
 
+        }  
+
+          // fmt.Println("peter- bb11")   //peter
+ 
+          var rpcOpts criurpc.CriuOpts     //peter
+
+          if criuOpts.PrevImagesDirectory == "" {     // peter added
+                fmt.Println("PrevImagesDirectory is empty. ")
+               rpcOpts = criurpc.CriuOpts{
+			ImagesDirFd:    proto.Int32(int32(imageDir.Fd())),
+			WorkDirFd:      proto.Int32(int32(workDir.Fd())),
+			LogLevel:       proto.Int32(4),
+			LogFile:        proto.String("dump.log"),
+			Root:           proto.String(c.config.Rootfs),
+			ManageCgroups:  proto.Bool(true),
+			NotifyScripts:  proto.Bool(true),
+			Pid:            proto.Int32(int32(c.initProcess.pid())),
+			ShellJob:       proto.Bool(criuOpts.ShellJob),
+			LeaveRunning:   proto.Bool(criuOpts.LeaveRunning),
+			TcpEstablished: proto.Bool(criuOpts.TcpEstablished),
+			ExtUnixSk:      proto.Bool(criuOpts.ExternalUnixConnections),
+			FileLocks:      proto.Bool(criuOpts.FileLocks),
+		        TrackMem:       proto.Bool(criuOpts.TrackMemory),  //peter
+		        AutoDedup:      proto.Bool(criuOpts.AutoDedup),  //peter
+		}
+
+          }else{
+                fmt.Println("PrevImagesDirectory is not empty. ")
+               rpcOpts = criurpc.CriuOpts{
+			ImagesDirFd:    proto.Int32(int32(imageDir.Fd())),
+			WorkDirFd:      proto.Int32(int32(workDir.Fd())),
+			LogLevel:       proto.Int32(4),
+			LogFile:        proto.String("dump.log"),
+			Root:           proto.String(c.config.Rootfs),
+			ManageCgroups:  proto.Bool(true),
+			NotifyScripts:  proto.Bool(true),
+			Pid:            proto.Int32(int32(c.initProcess.pid())),
+			ShellJob:       proto.Bool(criuOpts.ShellJob),
+			LeaveRunning:   proto.Bool(criuOpts.LeaveRunning),
+			TcpEstablished: proto.Bool(criuOpts.TcpEstablished),
+			ExtUnixSk:      proto.Bool(criuOpts.ExternalUnixConnections),
+			FileLocks:      proto.Bool(criuOpts.FileLocks),
+		        TrackMem:       proto.Bool(criuOpts.TrackMemory),  //peter
+		        ParentImg:      proto.String( criuOpts.PrevImagesDirectory )  , //peter
+		        AutoDedup:      proto.Bool(criuOpts.AutoDedup),  //peter
+		}
+          }
+        
+        /*   // peter marked
 	rpcOpts := criurpc.CriuOpts{
 		ImagesDirFd:    proto.Int32(int32(imageDir.Fd())),
 		WorkDirFd:      proto.Int32(int32(workDir.Fd())),
@@ -502,7 +577,15 @@ func (c *linuxContainer) Checkpoint(criuOpts *CriuOpts) error {
 		TcpEstablished: proto.Bool(criuOpts.TcpEstablished),
 		ExtUnixSk:      proto.Bool(criuOpts.ExternalUnixConnections),
 		FileLocks:      proto.Bool(criuOpts.FileLocks),
+                TrackMem:       proto.Bool(criuOpts.TrackMemory),  //peter
+                ParentImg:      proto.String( criuOpts.PrevImagesDirectory )  , //peter
+                AutoDedup:      proto.Bool(criuOpts.AutoDedup),  //peter
 	}
+        */
+
+        // peter
+        //fmt.Printf();  
+
 
 	// append optional criu opts, e.g., page-server and port
 	if criuOpts.PageServer.Address != "" && criuOpts.PageServer.Port != 0 {
@@ -519,8 +602,14 @@ func (c *linuxContainer) Checkpoint(criuOpts *CriuOpts) error {
 		}
 		rpcOpts.ManageCgroupsMode = proto.Uint32(uint32(criuOpts.ManageCgroupsMode))
 	}
+        
+        // peter
+        t := criurpc.CriuReqType_DUMP   
+        if criuOpts.EnablePreDump == true {
+                 fmt.Println("peter- pre_dump") 
+    		t = criurpc.CriuReqType_PRE_DUMP   
+        }
 
-	t := criurpc.CriuReqType_DUMP
 	req := &criurpc.CriuReq{
 		Type: &t,
 		Opts: &rpcOpts,
@@ -744,6 +833,8 @@ func (c *linuxContainer) criuApplyCgroups(pid int, req *criurpc.CriuReq) error {
 }
 
 func (c *linuxContainer) criuSwrk(process *Process, req *criurpc.CriuReq, opts *CriuOpts, applyCgroups bool) error {
+        
+        fmt.Println("dokcer/vendor/src/github.com/opencontainers/runcs/libcontainers/container_linux.go -> criuSwrk() 1")
 	fds, err := syscall.Socketpair(syscall.AF_LOCAL, syscall.SOCK_SEQPACKET|syscall.SOCK_CLOEXEC, 0)
 	if err != nil {
 		return err
@@ -758,6 +849,9 @@ func (c *linuxContainer) criuSwrk(process *Process, req *criurpc.CriuReq, opts *
 	args := []string{"swrk", "3"}
 	logrus.Debugf("Using CRIU %d at: %s", c.criuVersion, c.criuPath)
 	logrus.Debugf("Using CRIU with following args: %s", args)
+        fmt.Printf("Using Criu %d at: %s ...\n",c.criuVersion, c.criuPath)
+
+
 	cmd := exec.Command(c.criuPath, args...)
 	if process != nil {
 		cmd.Stdin = process.Stdin
@@ -805,12 +899,15 @@ func (c *linuxContainer) criuSwrk(process *Process, req *criurpc.CriuReq, opts *
 		}
 		value := val.MethodByName("Get" + name).Call([]reflect.Value{})
 		logrus.Debugf("CRIU option %s with value %v", name, value[0])
+                fmt.Printf("CRIU option:[%s] with value:[%v] \n", name, value[0])  // peter
 	}
 	data, err := proto.Marshal(req)
+        fmt.Println("proto.Marshal()")
 	if err != nil {
 		return err
 	}
 	_, err = criuClient.Write(data)
+        fmt.Println("criuClient.Write(data)")
 	if err != nil {
 		return err
 	}
@@ -818,6 +915,7 @@ func (c *linuxContainer) criuSwrk(process *Process, req *criurpc.CriuReq, opts *
 	buf := make([]byte, 10*4096)
 	for true {
 		n, err := criuClient.Read(buf)
+                fmt.Println("criuClient.Read()")
 		if err != nil {
 			return err
 		}
@@ -859,7 +957,13 @@ func (c *linuxContainer) criuSwrk(process *Process, req *criurpc.CriuReq, opts *
 			}
 			continue
 		case t == criurpc.CriuReqType_RESTORE:
+                         fmt.Println("restore--")
+ 			break
 		case t == criurpc.CriuReqType_DUMP:
+                          fmt.Println("dump--")
+                        break
+                case t == criurpc.CriuReqType_PRE_DUMP:
+                          fmt.Println("pre_dump--")   
 			break
 		default:
 			return fmt.Errorf("unable to parse the response %s", resp.String())
