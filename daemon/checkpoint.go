@@ -1,3 +1,5 @@
+// ./docker/daemon/checkpoint.go   //peter
+
 package daemon
 
 import (
@@ -31,6 +33,17 @@ func (daemon *Daemon) ContainerCheckpoint(name string, opts *types.CriuConfig) e
 			return err
 		}
 	}
+        
+      
+       /// add by peter 
+/*   make it empty if empty
+       if opts.PrevImagesDirectory == "" {
+		opts.PrevImagesDirectory = filepath.Join(container.Root, "criu.preimage")
+		if err := os.MkdirAll(opts.PrevImagesDirectory, 0755); err != nil && !os.IsExist(err) {
+			return err
+		}
+	}
+*/
 
 	if err := daemon.Checkpoint(container, opts); err != nil {
 		return fmt.Errorf("Cannot checkpoint container %s: %s", name, err)
