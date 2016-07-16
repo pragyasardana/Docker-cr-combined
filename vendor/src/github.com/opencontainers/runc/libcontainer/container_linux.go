@@ -915,7 +915,7 @@ func (c *linuxContainer) criuSwrk(process *Process, req *criurpc.CriuReq, opts *
 	buf := make([]byte, 10*4096)
 	for true {
 		n, err := criuClient.Read(buf)
-                fmt.Println("criuClient.Read()")
+                fmt.Println("criuClient.Read() 0")
 		if err != nil {
 			return err
 		}
@@ -932,6 +932,7 @@ func (c *linuxContainer) criuSwrk(process *Process, req *criurpc.CriuReq, opts *
 			return err
 		}
 		if !resp.GetSuccess() {
+                         fmt.Println("error 0")
 			typeString := req.GetType().String()
 			return fmt.Errorf("criu failed: type %s errno %d\nlog file: %s", typeString, resp.GetCrErrno(), logPath)
 		}
@@ -939,7 +940,9 @@ func (c *linuxContainer) criuSwrk(process *Process, req *criurpc.CriuReq, opts *
 		t := resp.GetType()
 		switch {
 		case t == criurpc.CriuReqType_NOTIFY:
+                        fmt.Println("CriuReqType_NOTIFY--") 
 			if err := c.criuNotifications(resp, process, opts, extFds); err != nil {
+                                fmt.Println("error 0.5")
 				return err
 			}
 			t = criurpc.CriuReqType_NOTIFY
@@ -948,11 +951,17 @@ func (c *linuxContainer) criuSwrk(process *Process, req *criurpc.CriuReq, opts *
 				NotifySuccess: proto.Bool(true),
 			}
 			data, err = proto.Marshal(req)
+                         fmt.Println("proto.Marshal(req) 2--")
+
 			if err != nil {
+                                 fmt.Println("error 1")
 				return err
 			}
+                       
 			n, err = criuClient.Write(data)
+ 			 fmt.Println("criuClient.Write(data) 2--")
 			if err != nil {
+                                  fmt.Println("error 2") 
 				return err
 			}
 			continue
@@ -968,17 +977,20 @@ func (c *linuxContainer) criuSwrk(process *Process, req *criurpc.CriuReq, opts *
 		default:
 			return fmt.Errorf("unable to parse the response %s", resp.String())
 		}
-
+                fmt.Println("break--")
 		break
 	}
 
 	// cmd.Wait() waits cmd.goroutines which are used for proxying file descriptors.
 	// Here we want to wait only the CRIU process.
 	st, err := cmd.Process.Wait()
+        fmt.Println("cmd.Process.Wait()")    
 	if err != nil {
+                 fmt.Println("error 3") 
 		return err
 	}
 	if !st.Success() {
+                 fmt.Println("error 4") 
 		return fmt.Errorf("criu failed: %s\nlog file: %s", st.String(), logPath)
 	}
 	return nil
