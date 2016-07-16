@@ -46,6 +46,9 @@ type CriuConfig struct {
         TrackMemory     bool //peter
         EnablePreDump     bool //peter
         AutoDedup         bool //peter
+        PageServer        bool //peter
+        Address           string  //peter 
+        Port              int32   //peter
 }
 
 // RestoreConfig holds the restore command options, which is a superset of the CRIU options
