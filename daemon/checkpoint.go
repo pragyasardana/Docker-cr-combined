@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
-
 	"github.com/docker/docker/api/types"
 )
 
@@ -44,6 +43,24 @@ func (daemon *Daemon) ContainerCheckpoint(name string, opts *types.CriuConfig) e
 		}
 	}
 */
+          
+       // add by peter
+/*
+        if  opts.PageServer == true {
+              if opts.Address =="" {
+                   return fmt.Errorf("Page Server enabled but address is not assigned");
+              }
+              if opts.Port =="" || opts.Port == -1 {
+                  return fmt.Errorf("Page Server enabled but port is not assigned");
+              } 
+           /*
+           //   p,err := strconv.Atoi(opts.Port)
+           //   if err !=nil && p==0{
+           //        return fmt.Errorf("Port=%s is not number", opts.Port)
+           //   } 
+           
+        }
+      */
 
 	if err := daemon.Checkpoint(container, opts); err != nil {
 		return fmt.Errorf("Cannot checkpoint container %s: %s", name, err)
