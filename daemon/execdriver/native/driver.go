@@ -197,8 +197,7 @@ func (d *Driver) Run(c *execdriver.Command, pipes *execdriver.Pipes, hooks execd
 		waitF = waitInPIDHost(p, cont)
 	}
 	ps, err := waitF()
-	if err != nil {
-		execErr, ok := err.(*exec.ExitError)
+	if err != nil {		execErr, ok := err.(*exec.ExitError)
 		if !ok {
 			return execdriver.ExitStatus{ExitCode: -1}, err
 		}
@@ -314,6 +313,12 @@ func (d *Driver) Unpause(c *execdriver.Command) error {
 }
 
 func libcontainerCriuOpts(containerOpts *types.CriuConfig) *libcontainer.CriuOpts {
+        // peter
+        pageServer := libcontainer.CriuPageServerInfo{
+            Address: containerOpts.Address,
+            Port:    containerOpts.Port,
+        }   
+        
 	return &libcontainer.CriuOpts{
 		ImagesDirectory:         containerOpts.ImagesDirectory,
 		WorkDirectory:           containerOpts.WorkDirectory,
@@ -322,6 +327,7 @@ func libcontainerCriuOpts(containerOpts *types.CriuConfig) *libcontainer.CriuOpt
                 TrackMemory:             containerOpts.TrackMemory,       //peter
                 EnablePreDump:           containerOpts.EnablePreDump,     //peter
                 AutoDedup:               containerOpts.AutoDedup,         //peter
+                PageServer:              pageServer,                      //peter
 		TcpEstablished:          true,
 		ExternalUnixConnections: true,
 		FileLocks:               true,
