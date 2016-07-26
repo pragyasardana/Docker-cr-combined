@@ -605,6 +605,7 @@ func (c *linuxContainer) Checkpoint(criuOpts *CriuOpts) error {
         
         // peter
         t := criurpc.CriuReqType_DUMP   
+	keepOpen := false
         if criuOpts.EnablePreDump == true {
                  fmt.Println("peter- pre_dump") 
     		t = criurpc.CriuReqType_PRE_DUMP   
@@ -613,6 +614,8 @@ func (c *linuxContainer) Checkpoint(criuOpts *CriuOpts) error {
 	req := &criurpc.CriuReq{
 		Type: &t,
 		Opts: &rpcOpts,
+//Added by Pragya
+		KeepOpen: &keepOpen,
 	}
 
 	for _, m := range c.config.Mounts {
@@ -913,6 +916,7 @@ func (c *linuxContainer) criuSwrk(process *Process, req *criurpc.CriuReq, opts *
 	}
 
 	buf := make([]byte, 10*4096)
+	predump := false
 	for true {
 		n, err := criuClient.Read(buf)
                 fmt.Println("criuClient.Read() 0")
@@ -972,7 +976,8 @@ func (c *linuxContainer) criuSwrk(process *Process, req *criurpc.CriuReq, opts *
                           fmt.Println("dump--")
                         break
                 case t == criurpc.CriuReqType_PRE_DUMP:
-                          fmt.Println("pre_dump--")   
+			predump = true
+                        fmt.Println("pre_dump--")   
 			break
 		default:
 			return fmt.Errorf("unable to parse the response %s", resp.String())
@@ -983,19 +988,26 @@ func (c *linuxContainer) criuSwrk(process *Process, req *criurpc.CriuReq, opts *
 
 	// cmd.Wait() waits cmd.goroutines which are used for proxying file descriptors.
 	// Here we want to wait only the CRIU process.
-	st, err := cmd.Process.Wait()
-        fmt.Println("cmd.Process.Wait()")    
-	if err != nil {
-                 fmt.Println("error 3") 
-		return err
-	}
-	if !st.Success() {
-                 fmt.Println("error 4") 
-		return fmt.Errorf("criu failed: %s\nlog file: %s", st.String(), logPath)
+	if predump == false {
+		st, err := cmd.Process.Wait()
+	        fmt.Println("cmd.Process.Wait()")
+		if err != nil {
+	                fmt.Println("error 3") 
+			return err
+		}
+		if !st.Success() {
+	                 fmt.Println("error 4") 
+			return fmt.Errorf("criu failed: %s\nlog file: %s", st.String(), logPath)
+		}
+	} else {
+		err := cmd.Process.Kill()
+		if err != nil {
+	                fmt.Println("error 5") 
+			return err
+		}
 	}
 	return nil
 }
-
 // block any external network activity
 func lockNetwork(config *configs.Config) error {
 	for _, config := range config.Networks {
